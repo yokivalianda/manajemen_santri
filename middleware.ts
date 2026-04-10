@@ -7,10 +7,11 @@ export async function middleware(req: NextRequest) {
   // Biarkan halaman login dan API tetap dapat diakses publik
   const url = req.nextUrl;
   const isLoginPage = url.pathname.startsWith("/login");
+  const isRegisterPage = url.pathname.startsWith("/register");
   const isApiAuth = url.pathname.startsWith("/api/auth");
   const isPublicFile = url.pathname.includes(".");
 
-  if (isLoginPage || isApiAuth || isPublicFile) {
+  if (isLoginPage || isRegisterPage || isApiAuth || isPublicFile) {
     return NextResponse.next();
   }
 
