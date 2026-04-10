@@ -11,6 +11,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String   @default("USER") // ADMIN or USER
+  createdAt DateTime @default(now())
+}
+
 model Santri {
   id        String @id @default(uuid())
   nama      String

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -22,6 +23,29 @@ async function main() {
   await prisma.halqohSantri.deleteMany();
   await prisma.halqoh.deleteMany();
   await prisma.santri.deleteMany();
+  await prisma.user.deleteMany();
+
+  // Create Admin
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  await prisma.user.create({
+    data: {
+      username: "admin",
+      password: adminPassword,
+      role: "ADMIN"
+    }
+  });
+
+  // Create User
+  const userPassword = await bcrypt.hash("user123", 10);
+  await prisma.user.create({
+    data: {
+      username: "user",
+      password: userPassword,
+      role: "USER"
+    }
+  });
+
+  console.log("✅ Seeded Admin and User accounts successfully.");
 
   // Create 30 santri
   const kelasOptions = ["Pra Sekolah", "SD", "SMP", "SMA", "Kuliah"];

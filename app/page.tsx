@@ -54,6 +54,7 @@ export default function HomePage() {
   // Core data
   const [santriList, setSantriList] = useState<Santri[]>([]);
   const [halqohs, setHalqohs] = useState<Halqoh[]>([]);
+  const [currentUser, setCurrentUser] = useState<{username: string, role: string} | null>(null);
 
   // Loading
   const [initialLoading, setInitialLoading] = useState(true);
@@ -85,7 +86,7 @@ export default function HomePage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   // Theme
-  const [isLight, setIsLight] = useState(false);
+  const [isLight, setIsLight] = useState(true);
 
   // Refs
   const csvInputRef = useRef<HTMLInputElement>(null);
@@ -96,20 +97,23 @@ export default function HomePage() {
 
   useEffect(() => {
     // Restore theme
-    if (localStorage.getItem("spTheme") === "light") {
+    if (localStorage.getItem("spTheme") === "dark") {
+      setIsLight(false);
+      document.documentElement.classList.add("dark");
+    } else {
       setIsLight(true);
       document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
     }
     
     Promise.all([
       fetch("/api/santri").then((r) => r.json()),
       fetch("/api/generate-halqoh").then((r) => r.json()),
+      fetch("/api/auth/me").then((r) => r.json()),
     ])
-      .then(([santriData, halqohData]) => {
+      .then(([santriData, halqohData, authData]) => {
         setSantriList(santriData.santris || []);
         setHalqohs(halqohData.halqohs || []);
+        if(authData.success) setCurrentUser(authData.user);
       })
       .catch(console.error)
       .finally(() => setInitialLoading(false));
@@ -360,7 +364,7 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 font-sans">
-      <Sidebar />
+      <Sidebar user={currentUser || undefined} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header 
@@ -668,31 +672,33 @@ export default function HomePage() {
             </div>
 
             {/* ── Generate Section ── */}
-            <div id="generate-halqoh" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm no-print p-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight mb-1">Generate Halqoh Cerdas</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Konfigurasi parameter untuk membagi kelompok secara otomatis berdasarkan kedekatan Jilid & Halaman.</p>
-              
-              <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-6">
-                <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Santri per Halqoh:</span>
-                  <select value={kapasitas} onChange={(e) => setKapasitas(Math.max(1, Number(e.target.value)))} className="bg-transparent text-gray-900 dark:text-white font-bold text-base focus:outline-none cursor-pointer">
-                    <option value={10}>10 Anak</option>
-                    <option value={15}>15 Anak</option>
-                    <option value={20}>20 Anak</option>
-                  </select>
-                </div>
+            {currentUser?.role === 'ADMIN' && (
+              <div id="generate-halqoh" className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm no-print p-6">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight mb-1">Generate Halqoh Cerdas</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Konfigurasi parameter untuk membagi kelompok secara otomatis berdasarkan kedekatan Jilid & Halaman.</p>
                 
-                <div className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300 px-4 py-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-indigo-500 fill-indigo-500" />
-                  <span>Prioritas Algoritma: <strong>Jilid → Halaman → Kelas</strong></span>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-6">
+                  <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Santri per Halqoh:</span>
+                    <select value={kapasitas} onChange={(e) => setKapasitas(Math.max(1, Number(e.target.value)))} className="bg-transparent text-gray-900 dark:text-white font-bold text-base focus:outline-none cursor-pointer">
+                      <option value={10}>10 Anak</option>
+                      <option value={15}>15 Anak</option>
+                      <option value={20}>20 Anak</option>
+                    </select>
+                  </div>
+                  
+                  <div className="text-xs bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300 px-4 py-2.5 rounded-xl border border-indigo-100 dark:border-indigo-800/30 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-indigo-500 fill-indigo-500" />
+                    <span>Prioritas Algoritma: <strong>Jilid → Halaman → Kelas</strong></span>
+                  </div>
                 </div>
-              </div>
 
-              <button onClick={handleGenerate} disabled={generateLoading || santriList.length === 0} className="w-full py-3.5 bg-gray-900 hover:bg-gray-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm disabled:opacity-50">
-                {generateLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
-                {generateLoading ? "Mengkalkulasi Pembagian Berkeadilan..." : "Generate Kelompok Sekarang"}
-              </button>
-            </div>
+                <button onClick={handleGenerate} disabled={generateLoading || santriList.length === 0} className="w-full py-3.5 bg-gray-900 hover:bg-gray-800 dark:bg-indigo-600 dark:hover:bg-indigo-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm disabled:opacity-50">
+                  {generateLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
+                  {generateLoading ? "Mengkalkulasi Pembagian Berkeadilan..." : "Generate Kelompok Sekarang"}
+                </button>
+              </div>
+            )}
 
             {/* ── Results ── */}
             {halqohs.length > 0 && (
