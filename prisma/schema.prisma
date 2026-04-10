@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Santri {
+  id        String @id @default(uuid())
+  nama      String
+  kelas     String
+  jilid     Int
+  halaman   Int
+  hafalan   String
+  status    String
+  kategori  String @default("sedang")
+  halqohs   HalqohSantri[]
+}
+
+model Halqoh {
+  id            String @id @default(uuid())
+  nama_kelompok String
+  kapasitas     Int
+  santris       HalqohSantri[]
+}
+
+model HalqohSantri {
+  id        String @id @default(uuid())
+  santriId  String
+  halqohId  String
+  santri    Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  halqoh    Halqoh @relation(fields: [halqohId], references: [id], onDelete: Cascade)
+}

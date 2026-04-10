@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sistem Pengelompokan Santri</title>
+<meta name="description" content="Dashboard manajemen dan pengelompokan santri berbasis algoritma halqoh otomatis."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg-deep:#0c1120;--bg-base:#111827;--bg-card:#1a2236;--bg-panel:#1e2a3a;
+  --teal:#00d4aa;--teal-dim:#00a884;--lavender:#a78bfa;--lav-dim:#7c3aed;
+  --gold:#f59e0b;--gold-dim:#d97706;
+  --text-1:#f1f5f9;--text-2:#94a3b8;--text-3:#64748b;
+  --border:#2a3650;--shadow:0 4px 24px rgba(0,0,0,.35);
+  --radius:12px;--transition:.2s ease;
+}
+body.light{
+  --bg-deep:#f1f5f9;--bg-base:#ffffff;--bg-card:#ffffff;--bg-panel:#f8fafc;
+  --text-1:#1e293b;--text-2:#475569;--text-3:#94a3b8;
+  --border:#e2e8f0;--shadow:0 4px 24px rgba(0,0,0,.08);
+  --teal:#009e80;--teal-dim:#007a63;
+  --lavender:#6d28d9;--lav-dim:#4c1d95;
+  --gold:#b45309;--gold-dim:#92400e;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg-deep);color:var(--text-1);min-height:100vh;font-size:14px;line-height:1.5}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+input,select{font-family:inherit;outline:none;border:none}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg-deep)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* LAYOUT */
+.page{max-width:1280px;margin:0 auto;padding:0 24px 48px}
+
+/* HEADER */
+header{background:var(--bg-base);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.header-inner{max-width:1280px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--teal),var(--lavender));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.brand-name{font-size:15px;font-weight:700;color:var(--text-1);letter-spacing:-.2px}
+.header-right{display:flex;align-items:center;gap:12px}
+.bell-btn{width:36px;height:36px;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-2);transition:var(--transition);position:relative}
+.bell-btn:hover{color:var(--text-1);border-color:var(--teal)}
+.bell-dot{position:absolute;top:8px;right:9px;width:6px;height:6px;background:var(--teal);border-radius:50%;border:1.5px solid var(--bg-base)}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--lav-dim));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;cursor:pointer;flex-shrink:0}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:var(--transition)}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.teal::before{background:var(--teal)}
+.stat-card.lav::before{background:var(--lavender)}
+.stat-card.gold::before{background:var(--gold)}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.stat-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.stat-icon.teal{background:rgba(0,212,170,.12)}
+.stat-icon.lav{background:rgba(167,139,250,.12)}
+.stat-icon.gold{background:rgba(245,158,11,.12)}
+.stat-num{font-size:36px;font-weight:700;letter-spacing:-1px;line-height:1}
+.stat-num.teal{color:var(--teal)}
+.stat-num.lav{color:var(--lavender)}
+.stat-num.gold{color:var(--gold)}
+.stat-label{font-size:12px;color:var(--text-2);margin-top:2px}
+.stat-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px;margin-top:8px}
+.stat-badge.teal{background:rgba(0,212,170,.15);color:var(--teal)}
+.sparkline{margin-top:12px;height:32px;width:100%}
+.sparkline svg{width:100%;height:100%}
+
+/* PANEL */
+.panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden}
+.panel-header{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--border)}
+.panel-title{font-size:15px;font-weight:600;color:var(--text-1)}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+/* INPUTS */
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
+.search-input{background:var(--bg-panel);border:1px solid var(--border);color:var(--text-1);border-radius:8px;padding:7px 12px 7px 34px;width:190px;font-size:13px;transition:var(--transition)}
+.search-input::placeholder{color:var(--text-3)}
+.search-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,170,.1)}
+.select-styled{background:var(--bg-panel);border:1px solid var(--border);color:var(--text-1);border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;transition:var(--transition)}
+.select-styled:focus{border-color:var(--lavender)}
+
+/* DROPDOWN MENU */
+.dropdown{position:relative}
+.dropdown-toggle{background:var(--bg-panel);border:1px solid var(--border);color:var(--text-2);border-radius:8px;padding:7px 12px;font-size:13px;display:flex;align-items:center;gap:6px;transition:var(--transition)}
+.dropdown-toggle:hover{border-color:var(--text-2);color:var(--text-1)}
+.dropdown-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:160px;box-shadow:var(--shadow);z-index:50;display:none}
+.dropdown-menu.open{display:block;animation:fadeIn .15s ease}
+.dropdown-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-size:13px;color:var(--text-2);cursor:pointer;transition:var(--transition)}
+.dropdown-item:hover{background:var(--bg-card);color:var(--text-1)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;transition:var(--transition);cursor:pointer}
+.btn-teal{background:var(--teal);color:#0c1120;border:none}
+.btn-teal:hover{background:var(--teal-dim);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,212,170,.3)}
+.btn-lav{background:linear-gradient(135deg,var(--lavender),var(--lav-dim));color:#fff;border:none}
+.btn-lav:hover{filter:brightness(1.1);transform:translateY(-1px);box-shadow:0 4px 16px rgba(167,139,250,.35)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-2)}
+.btn-ghost:hover{border-color:var(--lavender);color:var(--lavender)}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+.btn-icon{width:32px;height:32px;padding:0;justify-content:center;border-radius:7px}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:var(--transition)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(0,0,0,.025)}
+body.light tbody tr:hover{background:rgba(0,0,0,.03)}
+td{padding:11px 16px;font-size:13px;color:var(--text-1);white-space:nowrap}
+td.muted{color:var(--text-2)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-teal{background:rgba(0,212,170,.15);color:var(--teal)}
+.badge-gold{background:rgba(245,158,11,.15);color:var(--gold)}
+.badge-lav{background:rgba(167,139,250,.15);color:var(--lavender)}
+.badge-sm{font-size:10px;padding:2px 7px}
+
+/* PAGINATION */
+.pagination{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);font-size:13px;color:var(--text-2)}
+.pag-controls{display:flex;align-items:center;gap:6px}
+.pag-btn{width:30px;height:30px;border-radius:6px;background:var(--bg-panel);border:1px solid var(--border);color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);font-size:13px}
+.pag-btn:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+.pag-btn:disabled{opacity:.35;cursor:default}
+.pag-info{font-size:13px}
+
+/* ROW ACTIONS */
+.action-btns{display:flex;gap:4px}
+.act-btn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;border:1px solid transparent;cursor:pointer;transition:var(--transition);font-size:14px;background:transparent}
+.act-btn.edit{color:var(--text-3)}
+.act-btn.edit:hover{background:rgba(0,212,170,.12);color:var(--teal);border-color:rgba(0,212,170,.2)}
+.act-btn.del{color:var(--text-3)}
+.act-btn.del:hover{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.2)}
+
+/* GENERATE SECTION */
+.gen-section{padding:20px}
+.gen-title{font-size:15px;font-weight:600;margin-bottom:4px}
+.gen-sub{font-size:12px;color:var(--text-2);margin-bottom:18px}
+.gen-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.gen-label{font-size:13px;color:var(--text-2);font-weight:500}
+.gen-prio{font-size:13px;color:var(--text-3);background:var(--bg-deep);border:1px solid var(--border);border-radius:8px;padding:8px 14px;display:inline-block}
+.gen-prio span{color:var(--teal);font-weight:600}
+.btn-generate{width:100%;padding:13px;font-size:15px;font-weight:600;border-radius:10px;letter-spacing:.2px;margin-top:4px}
+
+/* HASIL SECTION */
+.hasil-header{padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.halqoh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:20px}
+.hcard{background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:var(--transition)}
+.hcard:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.3)}
+.hcard-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.hcard-title{font-size:13px;font-weight:600;color:var(--text-1)}
+.hcard-count{font-size:11px;color:var(--text-3);background:var(--bg-deep);border-radius:99px;padding:2px 8px}
+.hcard-body{padding:12px 16px}
+.student-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.student-row+.student-row{border-top:1px solid var(--border)}
+.s-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.s-name{flex:1;font-size:12px;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-badges{display:flex;gap:3px;flex-shrink:0}
+.sbadge{font-size:10px;padding:1px 5px;border-radius:4px;background:var(--bg-deep);color:var(--text-2);border:1px solid var(--border)}
+body.light .sbadge{background:#f1f5f9}
+.hcard-footer{padding:10px 16px;border-top:1px solid var(--border)}
+.btn-detail{width:100%;padding:7px;font-size:12px;border-radius:7px;background:transparent;border:1px solid var(--border);color:var(--text-2);transition:var(--transition);cursor:pointer;font-weight:500}
+.btn-detail:hover{border-color:var(--teal);color:var(--teal);background:rgba(0,212,170,.06)}
+
+/* FOOTER */
+footer{text-align:center;padding:20px;color:var(--text-3);font-size:12px;border-top:1px solid var(--border);margin-top:8px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:var(--transition)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.5);transform:scale(.95);transition:var(--transition)}
+.modal-overlay.open .modal{transform:scale(1)}
+.modal-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:600}
+.modal-close{width:30px;height:30px;border-radius:7px;background:var(--bg-panel);border:1px solid var(--border);color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);font-size:16px}
+.modal-close:hover{border-color:var(--text-2);color:var(--text-1)}
+.modal-body{padding:20px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px}
+.form-input{width:100%;background:var(--bg-panel);border:1px solid var(--border);color:var(--text-1);border-radius:8px;padding:9px 12px;font-size:13px;transition:var(--transition)}
+.form-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,212,170,.1)}
+.form-select{width:100%;background:var(--bg-panel);border:1px solid var(--border);color:var(--text-1);border-radius:8px;padding:9px 12px;font-size:13px;cursor:pointer}
+.modal-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+/* DETAIL MODAL */
+.detail-student{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.detail-student:last-child{border-bottom:none}
+.detail-s-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.detail-s-info{flex:1}
+.detail-s-name{font-size:13px;font-weight:500}
+.detail-s-meta{font-size:11px;color:var(--text-3);margin-top:1px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg-panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--text-1);box-shadow:var(--shadow);z-index:300;display:flex;align-items:center;gap:8px;transform:translateY(16px);opacity:0;transition:.3s ease;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .stats-grid,.halqoh-grid{grid-template-columns:1fr 1fr}
+  .toolbar{gap:6px}
+  .search-input{width:140px}
+}
+@media(max-width:600px){
+  .stats-grid,.halqoh-grid{grid-template-columns:1fr}
+  .panel-header{flex-direction:column;align-items:flex-start}
+  .brand-name{font-size:13px}
+}
+
+/* EMPTY STATE */
+.empty-state{padding:48px 20px;text-align:center;color:var(--text-3)}
+.empty-icon{font-size:36px;margin-bottom:12px}
+.empty-msg{font-size:14px}
+
+/* HASIL PLACEHOLDER */
+.hasil-placeholder{padding:48px 20px;text-align:center;color:var(--text-3)}
+.hasil-placeholder .big-icon{font-size:48px;margin-bottom:12px;opacity:.4}
+
+/* THEME TOGGLE */
+.theme-btn{width:68px;height:34px;border-radius:99px;background:var(--bg-panel);border:1.5px solid var(--border);display:flex;align-items:center;padding:3px;cursor:pointer;transition:var(--transition);position:relative;flex-shrink:0}
+.theme-btn:hover{border-color:var(--teal)}
+.theme-knob{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--lavender));display:flex;align-items:center;justify-content:center;font-size:13px;transition:.3s cubic-bezier(.34,1.56,.64,1);transform:translateX(0)}
+body.light .theme-knob{transform:translateX(34px)}
+.theme-icon-sun,.theme-icon-moon{position:absolute;font-size:12px;top:50%;transform:translateY(-50%);transition:var(--transition)}
+.theme-icon-moon{right:8px;opacity:1}
+.theme-icon-sun{left:8px;opacity:0}
+body.light .theme-icon-moon{opacity:0}
+body.light .theme-icon-sun{opacity:1}
+
+/* LIGHT MODE badge adjustments */
+body.light .badge-teal{background:rgba(0,158,128,.12);color:var(--teal)}
+body.light .badge-gold{background:rgba(180,83,9,.12);color:var(--gold)}
+body.light .stat-badge.teal{background:rgba(0,158,128,.12);color:var(--teal)}
+body.light .hcard:hover{box-shadow:0 8px 28px rgba(0,0,0,.1)}
+body.light .btn-teal{color:#fff}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-icon">🕌</div>
+      <span class="brand-name">Sistem Pengelompokan Santri</span>
+    </div>
+    <div class="header-right">
+      <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" title="Ganti Tema">
+        <span class="theme-icon-sun">☀️</span>
+        <div class="theme-knob" id="themeKnob">🌙</div>
+        <span class="theme-icon-moon">🌙</span>
+      </button>
+      <button class="bell-btn" title="Notifikasi">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="bell-dot"></span>
+      </button>
+      <div class="avatar" title="Profil Admin">A</div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+<!-- STATS -->
+<div class="stats-grid">
+  <div class="stat-card teal">
+    <div class="stat-top">
+      <div>
+        <div class="stat-num teal" id="stat-total">30</div>
+        <div class="stat-label">Total Santri</div>
+      </div>
+      <div class="stat-icon teal">👥</div>
+    </div>
+    <div class="sparkline">
+      <svg viewBox="0 0 120 32" fill="none" preserveAspectRatio="none">
+        <polyline points="0,28 20,22 40,25 60,14 80,18 100,10 120,6" stroke="#00d4aa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00d4aa" stop-opacity=".25"/><stop offset="100%" stop-color="#00d4aa" stop-opacity="0"/></linearGradient>
+        <polygon points="0,28 20,22 40,25 60,14 80,18 100,10 120,6 120,32 0,32" fill="url(#tg)"/>
+      </svg>
+    </div>
+  </div>
+  <div class="stat-card lav">
+    <div class="stat-top">
+      <div>
+        <div class="stat-num lav" id="stat-halqoh">6</div>
+        <div class="stat-label">Total Halqoh</div>
+      </div>
+      <div class="stat-icon lav">⚙️</div>
+    </div>
+    <span class="stat-badge teal">✓ 4 Penuh</span>
+  </div>
+  <div class="stat-card gold">
+    <div class="stat-top">
+      <div>
+        <div class="stat-num gold" id="stat-kapasitas">10</div>
+        <div class="stat-label">Kapasitas Rata-rata</div>
+      </div>
+      <div class="stat-icon gold">📊</div>
+    </div>
+    <div class="sparkline">
+      <svg viewBox="0 0 120 32" fill="none" preserveAspectRatio="none">
+        <polyline points="0,20 20,18 40,22 60,12 80,16 100,10 120,14" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b" stop-opacity=".25"/><stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/></linearGradient>
+        <polygon points="0,20 20,18 40,22 60,12 80,16 100,10 120,14 120,32 0,32" fill="url(#gg)"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- DATA PANEL -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title" id="table-title">Daftar Santri Terkini (30 Siswa)</div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" id="globalSearch" placeholder="Global Search..." oninput="filterTable()"/>
+      </div>
+      <select class="select-styled" id="filterJilid" onchange="filterTable()">
+        <option value="">Jilid</option>
+        <option value="1">Jilid 1</option>
+        <option value="2">Jilid 2</option>
+        <option value="3">Jilid 3</option>
+      </select>
+      <select class="select-styled" id="filterUsia" onchange="filterTable()">
+        <option value="">Usia</option>
+        <option value="7-9">7–9 Thn</option>
+        <option value="10-12">10–12 Thn</option>
+        <option value="13-19">13–19 Thn</option>
+      </select>
+      <div class="dropdown" id="kelolaDd">
+        <button class="dropdown-toggle btn" onclick="toggleDropdown('kelolaDd')">
+          Kelola Data <span style="font-size:16px;line-height:1">⋯</span>
+        </button>
+        <div class="dropdown-menu" id="kelolaDd-menu">
+          <div class="dropdown-item" onclick="showToast('📥 Import CSV segera tersedia','#00d4aa')">
+            <span>📥</span> Import CSV
+          </div>
+          <div class="dropdown-item" onclick="exportPDF()">
+            <span>📄</span> Export PDF
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-teal" onclick="openModal('addModal')">
+        ＋ Tambah Santri Baru
+      </button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nama</th>
+          <th>Usia</th>
+          <th>Jilid</th>
+          <th>Halaman</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div id="emptyState" class="empty-state" style="display:none">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-msg">Tidak ada santri yang cocok dengan filter.</div>
+    </div>
+  </div>
+  <div class="pagination">
+    <span id="pagInfo" class="pag-info">Menampilkan 1–15 dari 30</span>
+    <div class="pag-controls">
+      <button class="pag-btn" id="btnPrev" onclick="changePage(-1)" disabled>←</button>
+      <span id="pagLabel" style="font-size:13px;color:var(--text-2)">Halaman 1 dari 2</span>
+      <button class="pag-btn" id="btnNext" onclick="changePage(1)">→</button>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATE PANEL -->
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">Generate Halqoh Baru</div>
+  </div>
+  <div class="gen-section">
+    <div class="gen-title">Atur Algoritma Pengelompokan</div>
+    <div class="gen-sub">Konfigurasi parameter sebelum membuat kelompok halqoh.</div>
+    <div class="gen-row">
+      <span class="gen-label">Rata-rata per Halqoh:</span>
+      <select class="select-styled" id="kapasitasSelect" onchange="updateKapasitas()">
+        <option value="10">10 Santri</option>
+        <option value="15">15 Santri</option>
+        <option value="20">20 Santri</option>
+      </select>
+    </div>
+    <div class="gen-prio">
+      Prioritas: <span>Jilid</span> → <span>Halaman</span> → <span>Usia</span> <span style="color:var(--text-3)">(Tie-breaker)</span>
+    </div>
+    <button class="btn btn-lav btn-generate" onclick="generateHalqoh()">
+      ⚡ Generate Kelompok
+    </button>
+  </div>
+</div>
+
+<!-- HASIL PANEL -->
+<div class="panel" id="hasilPanel">
+  <div class="hasil-header">
+    <div class="panel-title" id="hasilTitle">Hasil Pembagian Halqoh</div>
+    <button class="btn btn-ghost btn-sm" id="btnUnduh" onclick="exportPDF()" style="display:none">
+      📄 Unduh Laporan PDF
+    </button>
+  </div>
+  <div id="hasilBody">
+    <div class="hasil-placeholder">
+      <div class="big-icon">🕌</div>
+      <div style="font-size:14px;color:var(--text-3)">Belum ada data halqoh.<br>Klik <strong style="color:var(--lavender)">Generate Kelompok</strong> untuk membuat pengelompokan.</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page -->
+
+<footer>
+  Sistem Pengelompokan Santri &bull; Algoritma Halqoh Otomatis &bull; &copy; 2026
+</footer>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Tambah Santri Baru</span>
+      <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editIdx" value=""/>
+      <div class="form-group">
+        <label class="form-label">Nama Santri</label>
+        <input class="form-input" id="fNama" type="text" placeholder="Masukkan nama lengkap"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">Usia (tahun)</label>
+          <input class="form-input" id="fUsia" type="number" min="5" max="25" placeholder="12"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jilid</label>
+          <select class="form-select" id="fJilid">
+            <option value="1">Jilid 1</option>
+            <option value="2">Jilid 2</option>
+            <option value="3">Jilid 3</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Halaman</label>
+        <input class="form-input" id="fHalaman" type="number" min="1" max="100" placeholder="1"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-select" id="fStatus">
+          <option value="Sedang Belajar">Sedang Belajar</option>
+          <option value="Lulus Jilid">Lulus Jilid</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">Batal</button>
+      <button class="btn btn-teal" onclick="saveSantri()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <span class="modal-title" id="detailModalTitle">Detail Halqoh</span>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-body" id="detailModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('detailModal')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- HAPUS CONFIRM -->
+<div class="modal-overlay" id="hapusModal">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <span class="modal-title">Hapus Santri</span>
+      <button class="modal-close" onclick="closeModal('hapusModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-2);font-size:13px">Apakah Anda yakin ingin menghapus santri <strong id="hapusNama" style="color:var(--text-1)"></strong>? Tindakan ini tidak dapat dibatalkan.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('hapusModal')">Batal</button>
+      <button class="btn" style="background:#ef4444;color:#fff" onclick="confirmHapus()">🗑 Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-dot" id="toastDot"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────
+const USTADZ = ['Ustadz Ahmad','Ustadz Bihaut','Ustadz Ashi','Ustadz Email','Ustadz Kimiui','Ustadz Farid'];
+const COLORS = ['#00d4aa','#a78bfa','#f59e0b','#60a5fa','#f472b6','#34d399'];
+
+let santri = [
+  {nama:'Abdullah Zaki',   usia:12, jilid:1, halaman:23, status:'Sedang Belajar'},
+  {nama:'Ahmad Ahmad',     usia:12, jilid:1, halaman:18, status:'Sedang Belajar'},
+  {nama:'Al Habib',        usia:11, jilid:1, halaman:24, status:'Lulus Jilid'},
+  {nama:'Anwar Ghazali',   usia:10, jilid:1, halaman:29, status:'Lulus Jilid'},
+  {nama:'Apil Mubarak',    usia:11, jilid:2, halaman:24, status:'Lulus Jilid'},
+  {nama:'Rifal Ramadhan',  usia:7,  jilid:1, halaman:18, status:'Sedang Belajar'},
+  {nama:'Daweel Ashari',   usia:7,  jilid:2, halaman:21, status:'Lulus Jilid'},
+  {nama:'Fial Nur',        usia:9,  jilid:1, halaman:1,  status:'Lulus Jilid'},
+  {nama:'Hamzah Adil',     usia:12, jilid:1, halaman:27, status:'Sedang Belajar'},
+  {nama:'Hasan Bassi',     usia:12, jilid:1, halaman:20, status:'Lulus Jilid'},
+  {nama:'Husan Nabil',     usia:12, jilid:1, halaman:24, status:'Sedang Belajar'},
+  {nama:'Ibrahim Salem',   usia:12, jilid:1, halaman:25, status:'Lulus Jilid'},
+  {nama:'Ryon Tibri',      usia:9,  jilid:2, halaman:23, status:'Lulus Jilid'},
+  {nama:'Iao Toarfiq',     usia:11, jilid:1, halaman:27, status:'Lulus Jilid'},
+  {nama:'Muhamman Kilky',  usia:17, jilid:1, halaman:18, status:'Lulus Jilid'},
+  {nama:'Musu Siddiq',     usia:17, jilid:3, halaman:18, status:'Lulus Jilid'},
+  {nama:'Nuh Ridho',       usia:19, jilid:1, halaman:25, status:'Lulus Jilid'},
+  {nama:'Zakarla Amin',    usia:9,  jilid:1, halaman:23, status:'Sedang Belajar'},
+  {nama:'Ali Halib',       usia:11, jilid:1, halaman:23, status:'Sedang Belajar'},
+  {nama:'Hamzak Adil',     usia:11, jilid:1, halaman:23, status:'Lulus Jilid'},
+  {nama:'Ahmad Parhan',    usia:11, jilid:2, halaman:23, status:'Lulus Jilid'},
+  {nama:'Sulaiman Pauzi',  usia:9,  jilid:1, halaman:23, status:'Sedang Belajar'},
+  {nama:'Sainan Nai',      usia:11, jilid:1, halaman:23, status:'Lulus Jilid'},
+  {nama:'Lagmon Koftan',   usia:10, jilid:1, halaman:23, status:'Sedang Belajar'},
+  {nama:'Walirtar Kisky',  usia:10, jilid:1, halaman:21, status:'Lulus Jilid'},
+  {nama:'Bilut Ramadhan',  usia:12, jilid:1, halaman:12, status:'Sedang Belajar'},
+  {nama:'Ismail Dasit',    usia:11, jilid:2, halaman:25, status:'Lulus Jilid'},
+  {nama:'Yatuf Yatan',     usia:12, jilid:1, halaman:25, status:'Sedang Belajar'},
+  {nama:'Idris Mukhlis',   usia:16, jilid:1, halaman:25, status:'Lulus Jilid'},
+  {nama:'Uim Tanfiq',      usia:14, jilid:1, halaman:25, status:'Lulus Jilid'},
+];
+
+let filtered = [...santri];
+let page = 1;
+const PER_PAGE = 15;
+let hapusIdx = null;
+let halqohGroups = [];
+
+// ── RENDER TABLE ─────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  const start = (page - 1) * PER_PAGE;
+  const slice = filtered.slice(start, start + PER_PAGE);
+  const total = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+
+  document.getElementById('table-title').textContent =
+    `Daftar Santri Terkini (${santri.length} Siswa)`;
+  document.getElementById('stat-total').textContent = santri.length;
+
+  if (!slice.length) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    tbody.innerHTML = slice.map((s, i) => {
+      const globalIdx = filtered.indexOf(s);
+      const rowNum = start + i + 1;
+      const badge = s.status === 'Sedang Belajar'
+        ? '<span class="badge badge-teal">Sedang Belajar</span>'
+        : '<span class="badge badge-gold">Lulus Jilid</span>';
+      return `<tr>
+        <td class="muted">${rowNum}</td>
+        <td><strong>${s.nama}</strong></td>
+        <td class="muted">${s.usia}y</td>
+        <td class="muted">Jilid ${s.jilid}</td>
+        <td class="muted">H.${s.halaman}</td>
+        <td>${badge}</td>
+        <td>
+          <div class="action-btns">
+            <button class="act-btn edit" title="Edit" onclick="openEdit(${globalIdx})">✏️</button>
+            <button class="act-btn del" title="Hapus" onclick="openHapus(${globalIdx})">🗑</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Pagination
+  document.getElementById('pagInfo').textContent =
+    total ? `Menampilkan ${start+1}–${Math.min(start+PER_PAGE, total)} dari ${total}` : 'Tidak ada data';
+  document.getElementById('pagLabel').textContent = `Halaman ${page} dari ${totalPages}`;
+  document.getElementById('btnPrev').disabled = page <= 1;
+  document.getElementById('btnNext').disabled = page >= totalPages;
+}
+
+function filterTable() {
+  const q = document.getElementById('globalSearch').value.toLowerCase();
+  const jilid = document.getElementById('filterJilid').value;
+  const usia = document.getElementById('filterUsia').value;
+  filtered = santri.filter(s => {
+    const matchQ = !q || s.nama.toLowerCase().includes(q) || String(s.jilid).includes(q);
+    const matchJ = !jilid || s.jilid == jilid;
+    let matchU = true;
+    if (usia === '7-9') matchU = s.usia >= 7 && s.usia <= 9;
+    else if (usia === '10-12') matchU = s.usia >= 10 && s.usia <= 12;
+    else if (usia === '13-19') matchU = s.usia >= 13 && s.usia <= 19;
+    return matchQ && matchJ && matchU;
+  });
+  page = 1;
+  renderTable();
+}
+
+function changePage(dir) {
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / PER_PAGE);
+  page = Math.max(1, Math.min(totalPages, page + dir));
+  renderTable();
+}
+
+// ── MODALS ────────────────────────────────────────────────────────────
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+});
+
+// ── ADD / EDIT ────────────────────────────────────────────────────────
+function openEdit(idx) {
+  const s = filtered[idx];
+  const realIdx = santri.indexOf(s);
+  document.getElementById('modalTitle').textContent = 'Edit Santri';
+  document.getElementById('editIdx').value = realIdx;
+  document.getElementById('fNama').value = s.nama;
+  document.getElementById('fUsia').value = s.usia;
+  document.getElementById('fJilid').value = s.jilid;
+  document.getElementById('fHalaman').value = s.halaman;
+  document.getElementById('fStatus').value = s.status;
+  openModal('addModal');
+}
+
+function openAdd() {
+  document.getElementById('modalTitle').textContent = 'Tambah Santri Baru';
+  document.getElementById('editIdx').value = '';
+  ['fNama','fUsia','fHalaman'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('fJilid').value = '1';
+  document.getElementById('fStatus').value = 'Sedang Belajar';
+}
+
+function saveSantri() {
+  const nama = document.getElementById('fNama').value.trim();
+  const usia = parseInt(document.getElementById('fUsia').value);
+  const jilid = parseInt(document.getElementById('fJilid').value);
+  const halaman = parseInt(document.getElementById('fHalaman').value);
+  const status = document.getElementById('fStatus').value;
+  if (!nama || isNaN(usia) || isNaN(halaman)) {
+    showToast('⚠️ Harap isi semua field dengan benar', '#f59e0b'); return;
+  }
+  const editIdx = document.getElementById('editIdx').value;
+  if (editIdx !== '') {
+    santri[parseInt(editIdx)] = {nama, usia, jilid, halaman, status};
+    showToast('✅ Data santri diperbarui', '#00d4aa');
+  } else {
+    santri.push({nama, usia, jilid, halaman, status});
+    showToast('✅ Santri baru ditambahkan', '#00d4aa');
+  }
+  closeModal('addModal');
+  filtered = [...santri];
+  filterTable();
+}
+
+// ── HAPUS ─────────────────────────────────────────────────────────────
+function openHapus(idx) {
+  hapusIdx = idx;
+  document.getElementById('hapusNama').textContent = filtered[idx].nama;
+  openModal('hapusModal');
+}
+function confirmHapus() {
+  if (hapusIdx === null) return;
+  const s = filtered[hapusIdx];
+  const realIdx = santri.indexOf(s);
+  if (realIdx > -1) santri.splice(realIdx, 1);
+  closeModal('hapusModal');
+  showToast('🗑 Santri dihapus', '#ef4444');
+  filtered = [...santri];
+  filterTable();
+}
+
+// ── DROPDOWN ──────────────────────────────────────────────────────────
+function toggleDropdown(id) {
+  const menu = document.getElementById(id + '-menu');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  document.querySelectorAll('.dropdown-menu.open').forEach(m => {
+    if (!m.parentElement.contains(e.target)) m.classList.remove('open');
+  });
+});
+
+// ── GENERATE HALQOH ───────────────────────────────────────────────────
+function updateKapasitas() {
+  document.getElementById('stat-kapasitas').textContent = document.getElementById('kapasitasSelect').value;
+}
+
+function generateHalqoh() {
+  const cap = parseInt(document.getElementById('kapasitasSelect').value);
+  const sorted = [...santri].sort((a,b) =>
+    a.jilid - b.jilid || a.halaman - b.halaman || a.usia - b.usia
+  );
+  const numGroups = Math.ceil(sorted.length / cap);
+  halqohGroups = Array.from({length: numGroups}, () => []);
+  sorted.forEach((s, i) => halqohGroups[i % numGroups].push(s));
+
+  document.getElementById('stat-halqoh').textContent = numGroups;
+  document.getElementById('hasilTitle').textContent = `Hasil Pembagian Halqoh (${numGroups} Kelompok)`;
+  document.getElementById('btnUnduh').style.display = '';
+
+  const grid = document.createElement('div');
+  grid.className = 'halqoh-grid';
+  halqohGroups.forEach((grp, gi) => {
+    const color = COLORS[gi % COLORS.length];
+    const card = document.createElement('div');
+    card.className = 'hcard';
+    card.innerHTML = `
+      <div class="hcard-header" style="border-top:3px solid ${color}">
+        <span class="hcard-title">Halqoh ${gi+1} — ${USTADZ[gi] || 'Ustadz'}</span>
+        <span class="hcard-count">${grp.length} Santri</span>
+      </div>
+      <div class="hcard-body">
+        ${grp.slice(0,5).map(s => `
+          <div class="student-row">
+            <div class="s-avatar" style="background:${color}20;color:${color};border:1.5px solid ${color}40;font-size:9px">
+              ${s.nama.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+            </div>
+            <span class="s-name">${s.nama}</span>
+            <div class="s-badges">
+              <span class="sbadge">${s.usia}y</span>
+              <span class="sbadge">J${s.jilid}</span>
+              <span class="sbadge">H.${s.halaman}</span>
+            </div>
+          </div>`).join('')}
+        ${grp.length > 5 ? `<div style="font-size:11px;color:var(--text-3);text-align:center;padding-top:6px">+${grp.length-5} lainnya</div>` : ''}
+      </div>
+      <div class="hcard-footer">
+        <button class="btn-detail" onclick="showDetail(${gi})">Tampilkan Detail</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  const body = document.getElementById('hasilBody');
+  body.innerHTML = '';
+  body.appendChild(grid);
+  document.getElementById('hasilPanel').scrollIntoView({behavior:'smooth', block:'start'});
+  showToast(`⚡ ${numGroups} halqoh berhasil dibuat!`, '#a78bfa');
+}
+
+// ── DETAIL MODAL ──────────────────────────────────────────────────────
+function showDetail(gi) {
+  const grp = halqohGroups[gi];
+  const color = COLORS[gi % COLORS.length];
+  document.getElementById('detailModalTitle').textContent = `Halqoh ${gi+1} — ${USTADZ[gi] || 'Ustadz'}`;
+  document.getElementById('detailModalBody').innerHTML = grp.map(s => `
+    <div class="detail-student">
+      <div class="detail-s-avatar" style="background:${color}20;color:${color};border:1.5px solid ${color}40">
+        ${s.nama.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+      </div>
+      <div class="detail-s-info">
+        <div class="detail-s-name">${s.nama}</div>
+        <div class="detail-s-meta">Usia ${s.usia} thn &bull; Jilid ${s.jilid} &bull; Halaman ${s.halaman}</div>
+      </div>
+      <span class="badge ${s.status==='Sedang Belajar'?'badge-teal':'badge-gold'} badge-sm">${s.status}</span>
+    </div>`).join('');
+  openModal('detailModal');
+}
+
+// ── EXPORT PDF ────────────────────────────────────────────────────────
+function exportPDF() {
+  showToast('📄 Membuka dialog cetak...', '#00d4aa');
+  setTimeout(() => window.print(), 600);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, color='#00d4aa') {
+  clearTimeout(toastTimer);
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastDot').style.background = color;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── THEME ────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('themeKnob').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('spTheme', isLight ? 'light' : 'dark');
+  showToast(isLight ? '☀️ Mode Terang aktif' : '🌙 Mode Gelap aktif', isLight ? '#b45309' : '#a78bfa');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────
+document.getElementById('addModal').querySelector('.btn-teal').addEventListener('click', saveSantri);
+// Restore saved theme
+if (localStorage.getItem('spTheme') === 'light') {
+  document.body.classList.add('light');
+  document.getElementById('themeKnob').textContent = '☀️';
+}
+renderTable();
+</script>
+</body>
+</html>
