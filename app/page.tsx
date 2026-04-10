@@ -113,7 +113,18 @@ export default function HomePage() {
       .then(([santriData, halqohData, authData]) => {
         setSantriList(santriData.santris || []);
         setHalqohs(halqohData.halqohs || []);
-        if(authData.success) setCurrentUser(authData.user);
+        if(authData.success) {
+          setCurrentUser(authData.user);
+          if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("login") === "success") {
+              const id = Date.now().toString();
+              setToasts((prev) => [...prev, { id, message: `Login berhasil! Selamat datang, ${authData.user.username.toUpperCase()}`, type: "success" }]);
+              setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000);
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          }
+        }
       })
       .catch(console.error)
       .finally(() => setInitialLoading(false));

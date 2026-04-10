@@ -25,7 +25,7 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (data.success) {
-        router.push("/");
+        router.push("/?login=success");
       } else {
         setErrorMsg(data.message || "Login gagal.");
       }
