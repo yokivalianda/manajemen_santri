@@ -15,7 +15,7 @@ export function Sidebar({ user }: { user?: { username: string; role: string } })
 
   const navLinks = [
     { name: "Data Santri", href: "/", icon: Users },
-    { name: "Halqoh", href: "/#generate-halqoh", icon: BookOpen },
+    { name: "Halqoh", href: "/halqoh", icon: BookOpen },
     { name: "Pengaturan", href: "/pengaturan", icon: Settings },
   ];
 
