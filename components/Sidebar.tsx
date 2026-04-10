@@ -1,15 +1,23 @@
 "use client";
 
 import { GraduationCap, Users, BookOpen, Settings, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 export function Sidebar({ user }: { user?: { username: string; role: string } }) {
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
+
+  const navLinks = [
+    { name: "Data Santri", href: "/", icon: Users },
+    { name: "Halqoh", href: "/#generate-halqoh", icon: BookOpen },
+    { name: "Pengaturan", href: "/pengaturan", icon: Settings },
+  ];
 
   return (
     <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 hidden md:flex flex-col h-screen sticky top-0 no-print">
@@ -22,18 +30,27 @@ export function Sidebar({ user }: { user?: { username: string; role: string } })
         </span>
       </div>
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-        <a href="#" className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-medium text-sm transition-colors">
-          <Users className="w-5 h-5" />
-          Data Santri
-        </a>
-        <a href="#generate-halqoh" className="flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl font-medium text-sm transition-colors">
-          <BookOpen className="w-5 h-5" />
-          Halqoh
-        </a>
-        <a href="/pengaturan" className="flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100 rounded-xl font-medium text-sm transition-colors">
-          <Settings className="w-5 h-5" />
-          Pengaturan
-        </a>
+        {navLinks.map((link) => {
+          // Because href="/" also matches "/pengaturan" if we just do startsWith,
+          // we do exact match for /, and exact match for /pengaturan
+          const isActive = pathname === link.href.split('#')[0];
+          const Icon = link.icon;
+          
+          return (
+            <Link 
+              key={link.name} 
+              href={link.href} 
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-colors ${
+                isActive 
+                  ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400" 
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-gray-100"
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {link.name}
+            </Link>
+          );
+        })}
       </nav>
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex flex-col gap-3">
         <div className="flex items-center gap-3">
