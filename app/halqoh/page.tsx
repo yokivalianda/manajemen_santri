@@ -37,6 +37,7 @@ export default function HalqohPage() {
   const [currentUser, setCurrentUser] = useState<{username: string, role: string} | null>(null);
   const [isLight, setIsLight] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [generateLoading, setGenerateLoading] = useState(false);
   const [kapasitas, setKapasitas] = useState(10);
@@ -118,7 +119,7 @@ export default function HalqohPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 font-sans">
-      <Sidebar user={currentUser || undefined} />
+      <Sidebar user={currentUser || undefined} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header 
@@ -126,6 +127,7 @@ export default function HalqohPage() {
           toggleTheme={toggleTheme} 
           searchQuery={searchQuery} 
           setSearchQuery={setSearchQuery} 
+          toggleSidebar={() => setIsMobileMenuOpen(true)}
         />
 
         <main className="flex-1 overflow-y-auto w-full">

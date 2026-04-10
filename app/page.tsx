@@ -88,6 +88,8 @@ export default function HomePage() {
   // Theme
   const [isLight, setIsLight] = useState(true);
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Refs
   const csvInputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -375,7 +377,7 @@ export default function HomePage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 font-sans">
-      <Sidebar user={currentUser || undefined} />
+      <Sidebar user={currentUser || undefined} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header 
@@ -383,6 +385,7 @@ export default function HomePage() {
           toggleTheme={toggleTheme} 
           searchQuery={searchQuery} 
           setSearchQuery={setSearchQuery} 
+          toggleSidebar={() => setIsMobileMenuOpen(true)}
         />
 
         <main className="flex-1 overflow-y-auto w-full">

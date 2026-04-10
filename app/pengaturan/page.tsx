@@ -24,6 +24,7 @@ export default function PengaturanPage() {
   const [passConfirm, setPassConfirm] = useState("");
 
   const [searchQuery, setSearchQuery] = useState(""); // Buat header prop filler
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("spTheme") === "dark") {
@@ -101,7 +102,7 @@ export default function PengaturanPage() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 font-sans">
-      <Sidebar user={currentUser || undefined} />
+      <Sidebar user={currentUser || undefined} isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <Header 
@@ -109,6 +110,7 @@ export default function PengaturanPage() {
           toggleTheme={toggleTheme} 
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          toggleSidebar={() => setIsMobileMenuOpen(true)}
         />
 
         <main className="flex-1 overflow-y-auto w-full relative">

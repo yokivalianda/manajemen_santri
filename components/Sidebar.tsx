@@ -1,10 +1,10 @@
 "use client";
 
-import { GraduationCap, Users, BookOpen, Settings, LogOut } from "lucide-react";
+import { GraduationCap, Users, BookOpen, Settings, LogOut, X } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
-export function Sidebar({ user }: { user?: { username: string; role: string } }) {
+export function Sidebar({ user, isOpen, onClose }: { user?: { username: string; role: string }, isOpen?: boolean, onClose?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -20,15 +20,27 @@ export function Sidebar({ user }: { user?: { username: string; role: string } })
   ];
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 hidden md:flex flex-col h-screen sticky top-0 no-print">
-      <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
-          <GraduationCap className="w-5 h-5 text-white" />
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-40 md:hidden transition-opacity" onClick={onClose} />
+      )}
+
+      <aside className={`w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col h-screen fixed md:sticky top-0 z-50 no-print transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-sm">
+              <GraduationCap className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-gray-900 dark:text-gray-100 text-sm tracking-tight">
+              Sistem Santri
+            </span>
+          </div>
+          {/* Close button on mobile */}
+          <button className="md:hidden p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white" onClick={onClose}>
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <span className="font-bold text-gray-900 dark:text-gray-100 text-sm tracking-tight">
-          Manajemen Santri
-        </span>
-      </div>
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navLinks.map((link) => {
           // Because href="/" also matches "/pengaturan" if we just do startsWith,
@@ -40,6 +52,7 @@ export function Sidebar({ user }: { user?: { username: string; role: string } })
             <Link 
               key={link.name} 
               href={link.href} 
+              onClick={() => onClose && onClose()}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-colors ${
                 isActive 
                   ? "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400" 
@@ -67,5 +80,6 @@ export function Sidebar({ user }: { user?: { username: string; role: string } })
         </button>
       </div>
     </aside>
+    </>
   );
 }
